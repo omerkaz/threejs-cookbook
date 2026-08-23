@@ -2,6 +2,8 @@ import type { CategoryId, RecipeDef, RecipeMeta } from "../engine/types";
 
 import tideline from "./scenes/tideline";
 import tidelineSrc from "./scenes/tideline.ts?raw";
+import paperRelief from "./scenes/paper-relief";
+import paperReliefSrc from "./scenes/paper-relief.ts?raw";
 import galaxySpiral from "./scenes/galaxy-spiral";
 import galaxySpiralSrc from "./scenes/galaxy-spiral.ts?raw";
 import starfieldWarp from "./scenes/starfield-warp";
@@ -45,6 +47,7 @@ function withSource(meta: RecipeMeta, source: string): RecipeDef {
 /** Ordered registry — order defines prev/next navigation and grid order. */
 export const recipes: RecipeDef[] = [
   withSource(tideline, tidelineSrc),
+  withSource(paperRelief, paperReliefSrc),
   withSource(polyhedraLab, polyhedraLabSrc),
   withSource(wireframeTerrain, wireframeTerrainSrc),
   withSource(pbrGrid, pbrGridSrc),
