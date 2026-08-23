@@ -4,6 +4,8 @@ import tideline from "./scenes/tideline";
 import tidelineSrc from "./scenes/tideline.ts?raw";
 import paperRelief from "./scenes/paper-relief";
 import paperReliefSrc from "./scenes/paper-relief.ts?raw";
+import basilica from "./scenes/basilica";
+import basilicaSrc from "./scenes/basilica.ts?raw";
 import galaxySpiral from "./scenes/galaxy-spiral";
 import galaxySpiralSrc from "./scenes/galaxy-spiral.ts?raw";
 import starfieldWarp from "./scenes/starfield-warp";
@@ -48,6 +50,7 @@ function withSource(meta: RecipeMeta, source: string): RecipeDef {
 export const recipes: RecipeDef[] = [
   withSource(tideline, tidelineSrc),
   withSource(paperRelief, paperReliefSrc),
+  withSource(basilica, basilicaSrc),
   withSource(polyhedraLab, polyhedraLabSrc),
   withSource(wireframeTerrain, wireframeTerrainSrc),
   withSource(pbrGrid, pbrGridSrc),
