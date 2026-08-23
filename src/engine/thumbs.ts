@@ -17,6 +17,9 @@ const THUMB_H = 300;
 const SCENE_BG = 0x0a0a0c;
 /** Default seconds of simulated time so motion-driven scenes compose a lively frame. */
 const DEFAULT_WARMUP = 1.6;
+/** Fixed step rate for recipes that integrate state in `preRender`. */
+const WARMUP_HZ = 45;
+const MAX_WARMUP_STEPS = 240;
 
 const cache = new Map<string, string>();
 const pending = new Map<string, Promise<string>>();
@@ -66,16 +69,34 @@ function renderThumb(recipe: RecipeMeta, variant: string): string {
   const build = recipe.create({
     scene,
     camera,
+    renderer: r,
     variant,
     props: defaultProps(recipe),
   });
   const warmup = recipe.thumbnailWarmup ?? DEFAULT_WARMUP;
   try {
-    build.update?.(warmup, warmup);
+    if (build.preRender) {
+      // Render-target recipes integrate their state: one giant dt would
+      // collapse the whole warm-up into a single (clamped) step, so step the
+      // simulation at a fixed rate instead. Deterministic either way.
+      const steps = THREE.MathUtils.clamp(Math.round(warmup * WARMUP_HZ), 1, MAX_WARMUP_STEPS);
+      const dt = 1 / WARMUP_HZ;
+      for (let i = 0; i < steps; i++) {
+        build.update?.((i + 1) * dt, dt);
+        build.preRender(dt);
+      }
+    } else {
+      // Closed-form recipes derive every position from elapsed time, so a
+      // single jump composes exactly what that many seconds of frames would.
+      build.update?.(warmup, warmup);
+    }
     resetRendererState(r);
     r.render(scene, camera);
     return r.domElement.toDataURL("image/png");
   } finally {
+    // Whatever happened above — including a throw mid-warm-up — the shared
+    // renderer goes back to baseline before the next recipe touches it.
+    resetRendererState(r);
     build.dispose?.();
     disposeSceneGraph(scene);
   }

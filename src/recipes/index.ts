@@ -8,6 +8,8 @@ import basilica from "./scenes/basilica";
 import basilicaSrc from "./scenes/basilica.ts?raw";
 import emberworks from "./scenes/emberworks";
 import emberworksSrc from "./scenes/emberworks.ts?raw";
+import inkfall from "./scenes/inkfall";
+import inkfallSrc from "./scenes/inkfall.ts?raw";
 import galaxySpiral from "./scenes/galaxy-spiral";
 import galaxySpiralSrc from "./scenes/galaxy-spiral.ts?raw";
 import starfieldWarp from "./scenes/starfield-warp";
@@ -54,6 +56,7 @@ export const recipes: RecipeDef[] = [
   withSource(paperRelief, paperReliefSrc),
   withSource(basilica, basilicaSrc),
   withSource(emberworks, emberworksSrc),
+  withSource(inkfall, inkfallSrc),
   withSource(polyhedraLab, polyhedraLabSrc),
   withSource(wireframeTerrain, wireframeTerrainSrc),
   withSource(pbrGrid, pbrGridSrc),

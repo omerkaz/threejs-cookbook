@@ -32,6 +32,20 @@ export function disposeSceneGraph(scene: THREE.Scene): void {
   scene.clear();
 }
 
+/**
+ * Baseline renderer state. A recipe's `preRender` draws into its own targets
+ * and is required to restore this itself; calling it here as well means a
+ * buggy recipe can only break its own frame, never the next one.
+ */
+function restoreRendererState(renderer: THREE.WebGLRenderer): void {
+  renderer.setRenderTarget(null);
+  renderer.setScissorTest(false);
+  renderer.autoClear = true;
+  renderer.autoClearColor = true;
+  renderer.autoClearDepth = true;
+  renderer.autoClearStencil = true;
+}
+
 function disposeMaterial(material: THREE.Material): void {
   for (const value of Object.values(material)) {
     if (value instanceof THREE.Texture) value.dispose();
@@ -87,7 +101,7 @@ export function mountScene(
     }
     camera.position.set(0, 0, 8);
     camera.lookAt(0, 0, 0);
-    build = recipe.create({ scene, camera, variant, props });
+    build = recipe.create({ scene, camera, renderer, variant, props });
   }
 
   function resize(): void {
@@ -105,6 +119,13 @@ export function mountScene(
   function renderFrame(dt: number): void {
     elapsed += dt;
     build?.update?.(elapsed, dt);
+    if (build?.preRender) {
+      try {
+        build.preRender(dt);
+      } finally {
+        restoreRendererState(renderer);
+      }
+    }
     renderer.render(scene, camera);
   }
 

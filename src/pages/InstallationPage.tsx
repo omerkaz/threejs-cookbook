@@ -23,6 +23,7 @@ const props = Object.fromEntries(recipe.props.map((p) => [p.key, p.default]));
 const build = recipe.create({
   scene,
   camera,
+  renderer, // recipes with their own render targets need it
   variant: recipe.variants[0].id,
   props,
 });
@@ -45,6 +46,7 @@ function frame(now: number) {
   last = now;
   elapsed += dt;
   build.update?.(elapsed, dt);
+  build.preRender?.(dt); // off-screen passes, restores the default target
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }

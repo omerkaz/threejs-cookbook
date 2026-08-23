@@ -31,6 +31,12 @@ export type CategoryId =
 export interface SceneContext {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
+  /**
+   * The renderer that will draw this scene. Recipes that keep their own
+   * render targets (feedback buffers, simulation passes) need it; everything
+   * else can ignore it. Never call `render()` on it outside `preRender`.
+   */
+  renderer: THREE.WebGLRenderer;
   variant: string;
   props: PropValues;
 }
@@ -39,6 +45,16 @@ export interface SceneContext {
 export interface SceneBuild {
   /** Advance the simulation. `elapsed` and `dt` are seconds. */
   update?(elapsed: number, dt: number): void;
+  /**
+   * Off-screen work (render-target passes) for the frame that is about to be
+   * drawn. Called immediately before the main render by the harness, and once
+   * per warm-up step by the thumbnailer.
+   *
+   * State invariant: when this returns, the render target must be null and
+   * `autoClear` restored to true. Both callers additionally reset the renderer
+   * defensively — one recipe must never be able to corrupt the next.
+   */
+  preRender?(dt: number): void;
   /**
    * Apply changed props without a rebuild. Return true when handled;
    * returning false (or omitting the method) asks the harness to rebuild.
