@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { PropValues, RecipeMeta, SceneBuild } from "./types";
+import type { PropValues, RecipeMeta, RecipeRendering, SceneBuild } from "./types";
 
 export interface MountOptions {
   variant: string;
@@ -46,6 +46,24 @@ function restoreRendererState(renderer: THREE.WebGLRenderer): void {
   renderer.autoClearStencil = true;
 }
 
+/**
+ * Apply a recipe's declared renderer state. Called with `undefined` for every
+ * recipe that does not declare `rendering`, in which case it touches nothing —
+ * that no-op is what keeps existing recipes byte-identical.
+ */
+export function applyRendering(
+  renderer: THREE.WebGLRenderer,
+  rendering: RecipeRendering | undefined,
+): void {
+  if (!rendering) return;
+  if (rendering.toneMapping === "aces") renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  const exposure = rendering.exposure;
+  if (typeof exposure === "number" && Number.isFinite(exposure)) {
+    // A NaN or wild exposure from a typo would blank the frame; clamp instead.
+    renderer.toneMappingExposure = THREE.MathUtils.clamp(exposure, 0.05, 8);
+  }
+}
+
 function disposeMaterial(material: THREE.Material): void {
   for (const value of Object.values(material)) {
     if (value instanceof THREE.Texture) value.dispose();
@@ -68,6 +86,9 @@ export function mountScene(
   const maxDpr = opts.maxDpr ?? 2;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setClearColor(SCENE_BG, 1);
+  // This renderer belongs to one recipe for its whole life, so the recipe's
+  // declared tone curve can be set once here rather than per frame.
+  applyRendering(renderer, recipe.rendering);
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
@@ -126,7 +147,8 @@ export function mountScene(
         restoreRendererState(renderer);
       }
     }
-    renderer.render(scene, camera);
+    if (build?.render) build.render();
+    else renderer.render(scene, camera);
   }
 
   function loop(now: number): void {

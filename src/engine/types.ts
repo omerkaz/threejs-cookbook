@@ -41,6 +41,19 @@ export interface SceneContext {
   props: PropValues;
 }
 
+/**
+ * Renderer state a recipe needs for its whole frame. Applied by the harness
+ * at mount and by the thumbnailer per capture (after its reset, so the next
+ * capture's reset clears it again). Omit the field and the renderer keeps its
+ * defaults — a recipe without `rendering` renders exactly as it always did.
+ */
+export interface RecipeRendering {
+  /** Only ACES is offered: it is the curve the HDR-authored recipes assume. */
+  toneMapping?: "aces";
+  /** Multiplier fed to `toneMappingExposure`. Clamped to a sane range. */
+  exposure?: number;
+}
+
 /** What a recipe hands back to the harness. */
 export interface SceneBuild {
   /** Advance the simulation. `elapsed` and `dt` are seconds. */
@@ -55,6 +68,17 @@ export interface SceneBuild {
    * defensively — one recipe must never be able to corrupt the next.
    */
   preRender?(dt: number): void;
+  /**
+   * Full-render override, for recipes that own an EffectComposer. When
+   * present it replaces `renderer.render(scene, camera)` entirely — the
+   * harness and the thumbnailer both call it instead. Call order is always
+   * `update` → `preRender?` → `render?`.
+   *
+   * The implementation owns its own sizing: read `renderer.getDrawingBufferSize()`
+   * (never the CSS size) and resize the composer when it changes, and dispose
+   * every composer render target and pass in `dispose()`.
+   */
+  render?(): void;
   /**
    * Apply changed props without a rebuild. Return true when handled;
    * returning false (or omitting the method) asks the harness to rebuild.
@@ -78,6 +102,8 @@ export interface RecipeMeta {
    * than the 1.6s default to compose. Keep it deterministic: seeded RNG only.
    */
   thumbnailWarmup?: number;
+  /** Renderer-level state (tone curve, exposure) this recipe is authored for. */
+  rendering?: RecipeRendering;
   create(ctx: SceneContext): SceneBuild;
 }
 

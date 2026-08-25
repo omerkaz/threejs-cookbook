@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { disposeSceneGraph } from "./harness";
+import { applyRendering, disposeSceneGraph } from "./harness";
 import { defaultProps, type RecipeMeta } from "./types";
 
 /**
@@ -91,7 +91,11 @@ function renderThumb(recipe: RecipeMeta, variant: string): string {
       build.update?.(warmup, warmup);
     }
     resetRendererState(r);
-    r.render(scene, camera);
+    // After the reset, never before: the reset is the baseline every recipe
+    // starts from, and the *next* capture's reset is what clears this again.
+    applyRendering(r, recipe.rendering);
+    if (build.render) build.render();
+    else r.render(scene, camera);
     return r.domElement.toDataURL("image/png");
   } finally {
     // Whatever happened above — including a throw mid-warm-up — the shared
